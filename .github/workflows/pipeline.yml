@@ -1,0 +1,53 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build_test_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Docker Compose Build
+        run: docker compose build
+
+      - name: Run Unit Tests
+        run: |
+          docker compose run --rm data_collector pytest
+          docker compose run --rm ml_model pytest
+          docker compose run --rm sec_manager pytest
+          docker compose run --rm fin_dash pytest
+
+      - name: Security Scan (Optional)
+        run: |
+          echo "Placeholder for running security scans"
+
+      - name: Build & Push Docker Images
+        run: |
+          # For example:
+          # docker login -u $DOCKER_USER -p $DOCKER_PASS
+          # docker compose build
+          # docker compose push
+          echo "Push images to Docker registry if desired."
+
+      - name: Terraform Deploy
+        run: |
+          cd infrastructure
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Helm Deploy
+        run: |
+          helm upgrade --install data-collector helm/data-collector
+          helm upgrade --install ml-model helm/ml-model
+          helm upgrade --install fin-dash helm/fin-dash
+          helm upgrade --install sec-manager helm/sec-manager
