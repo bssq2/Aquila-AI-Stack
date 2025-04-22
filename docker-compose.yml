@@ -1,54 +1,54 @@
-version: "3.9"
+# docker-compose.yml
+# (no “version:” key – Compose V2 no longer needs it)
 
 services:
-  # -------------------- DATA COLLECTOR --------------------
-  data_collector:
-    build: ./services/data_collector
-    container_name: data_collector
-    restart: unless-stopped
-    environment:
-      PYTHONUNBUFFERED: "1"
-    volumes:
-      - ./services/data_collector:/app
-    ports:
-      - "5100:8000"
-
-  # -------------------- ML MODEL ---------------------------
+  # ───────────────────────────────────────────────────────── ml‑model ──
   ml_model:
     build: ./services/ml_model
     container_name: ml_model
     restart: unless-stopped
+    volumes:
+      - ./services/ml_model:/app            # service source
     environment:
       PYTHONUNBUFFERED: "1"
-    volumes:
-      - ./services/ml_model:/app
     ports:
-      - "5200:8000"
+      - "5200:8000"                         # host:container
 
-  # -------------------- SEC MANAGER ------------------------
-  sec_manager:
-    build: ./services/sec_manager
-    container_name: sec_manager
+  # ────────────────────────────────────────────────── data‑collector ──
+  data_collector:
+    build: ./services/data_collector
+    container_name: data_collector
     restart: unless-stopped
+    volumes:
+      - ./services/data_collector:/app      # service source
+      - ./tests/data_collector_tests:/app/tests   # ← give pytest the tests
     environment:
       PYTHONUNBUFFERED: "1"
-    volumes:
-      - ./services/sec_manager:/app
     ports:
-      - "5000:8000"
+      - "5100:8000"
 
-  # -------------------- FIN DASH ---------------------------
+  # ────────────────────────────────────────────────────── fin‑dash ──
   fin_dash:
     build: ./services/fin_dash
     container_name: fin_dash
     restart: unless-stopped
-    environment:
-      PYTHONUNBUFFERED: "1"
     volumes:
       - ./services/fin_dash:/app
+    environment:
+      PYTHONUNBUFFERED: "1"
     ports:
       - "7100:8050"
 
-networks:
-  default:
-    driver: bridge
+  # ──────────────────────────────────────────────────── sec‑manager ──
+  sec_manager:
+    build: ./services/sec_manager
+    container_name: sec_manager
+    restart: unless-stopped
+    volumes:
+      - ./services/sec_manager:/app
+    environment:
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "5000:8000"
+
+# default bridge network is created automatically; no extra config needed
