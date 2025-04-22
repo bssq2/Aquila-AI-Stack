@@ -1,38 +1,63 @@
-version: '3.9'
-
+# docker-compose.yml
 services:
   data_collector:
     build:
-      context: ./services/data-collector
-    image: your_registry/data-collector:latest
-    env_file: .env
+      context: ./services/data_collector
+      dockerfile: Dockerfile
+    environment:
+      - PORT=5000
     ports:
-      - "5000:5000"
-    command: ["python", "src/main.py"]
+      - "5100:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   ml_model:
     build:
-      context: ./services/ml-model
-    image: your_registry/ml-model:latest
-    env_file: .env
+      context: ./services/ml_model
+      dockerfile: Dockerfile
+    environment:
+      - PORT=6000
     ports:
-      - "5001:5001"
-    command: ["python", "src/main.py"]
+      - "6000:6000"
+    depends_on:
+      - data_collector
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   sec_manager:
     build:
-      context: ./services/sec-manager
-    image: your_registry/sec-manager:latest
-    env_file: .env
+      context: ./services/sec_manager
+      dockerfile: Dockerfile
+    environment:
+      - PORT=9000
     ports:
       - "9000:9000"
-    command: ["python", "src/main.py"]
+    depends_on:
+      - ml_model
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   fin_dash:
     build:
-      context: ./services/fin-dash
-    image: your_registry/fin-dash:latest
-    env_file: .env
+      context: ./services/fin_dash
+      dockerfile: Dockerfile
+    environment:
+      - PORT=7000
     ports:
-      - "8050:8050"
-    command: ["python", "src/main.py"]
+      - "7100:7000"
+    depends_on:
+      - sec_manager
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
