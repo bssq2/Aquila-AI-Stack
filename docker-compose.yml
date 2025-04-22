@@ -1,37 +1,47 @@
-version: '3.9'
+# docker-compose.yml  ─ place this in the repo root
+# ───────────────────────────────────────────────────
 services:
   data_collector:
     build:
-      context: ./services/data-collector
-    image: your_registry/data-collector:latest
-    env_file: .env
+      context: ./services/data_collector
+    container_name: data_collector
+    environment:      #  MUST be a YAML mapping (key‑value pairs)
+      COLLECT_INTERVAL: "60"
     ports:
-      - "5000:5000"
-    command: ["python", "src/main.py"]
+      - "5100:5000"   # host‑port : container‑port
+                     #  5000 inside the container is free; 5100
+                     #  avoids macOS ControlCenter that keeps grabbing 5000
 
   ml_model:
     build:
-      context: ./services/ml-model
-    image: your_registry/ml-model:latest
-    env_file: .env
+      context: ./services/ml_model
+    container_name: ml_model
+    # expose only if the model serves an HTTP/gRPC port
     ports:
-      - "5001:5001"
-    command: ["python", "src/main.py"]
+      - "5200:5200"
 
   sec_manager:
     build:
-      context: ./services/sec-manager
-    image: your_registry/sec-manager:latest
-    env_file: .env
+      context: ./services/sec_manager
+    container_name: sec_manager
     ports:
-      - "9000:9000"
-    command: ["python", "src/main.py"]
+      - "5300:5300"
 
   fin_dash:
     build:
-      context: ./services/fin-dash
-    image: your_registry/fin-dash:latest
-    env_file: .env
+      context: ./services/fin_dash
+    container_name: fin_dash
+    environment:
+      DASH_DEBUG: "true"
     ports:
-      - "8050:8050"
-    command: ["python", "src/main.py"]
+      - "7100:7100"
+    depends_on:
+      - data_collector
+      - ml_model
+      - sec_manager
+
+# you can omit networks: Compose v2 creates “<folder>_default” automatically,
+# but defining it explicitly never hurts:
+networks:
+  default:
+    driver: bridge
