@@ -1,33 +1,32 @@
-# docker-compose.yml
-# (no “version:” key – Compose V2 no longer needs it)
+# docker‑compose.yml  ── Compose V2 syntax (no “version:” key)
 
 services:
-  # ───────────────────────────────────────────────────────── ml‑model ──
-  ml_model:
-    build: ./services/ml_model
-    container_name: ml_model
-    restart: unless-stopped
-    volumes:
-      - ./services/ml_model:/app            # service source
-    environment:
-      PYTHONUNBUFFERED: "1"
-    ports:
-      - "5200:8000"                         # host:container
-
-  # ────────────────────────────────────────────────── data‑collector ──
+  # ────────────────────────────────────────── data‑collector ──
   data_collector:
     build: ./services/data_collector
     container_name: data_collector
     restart: unless-stopped
     volumes:
-      - ./services/data_collector:/app      # service source
-      - ./tests/data_collector_tests:/app/tests   # ← give pytest the tests
+      - ./services/data_collector:/app           # service source
+      - ./tests/data_collector_tests:/app/tests  # make tests visible in the image
     environment:
       PYTHONUNBUFFERED: "1"
     ports:
-      - "5100:8000"
+      - "6000:6000"                              # host:container (matches tests)
 
-  # ────────────────────────────────────────────────────── fin‑dash ──
+  # ────────────────────────────────────────────────── ml‑model ──
+  ml_model:
+    build: ./services/ml_model
+    container_name: ml_model
+    restart: unless-stopped
+    volumes:
+      - ./services/ml_model:/app
+    environment:
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "5200:8000"
+
+  # ────────────────────────────────────────────────── fin‑dash ──
   fin_dash:
     build: ./services/fin_dash
     container_name: fin_dash
@@ -39,7 +38,7 @@ services:
     ports:
       - "7100:8050"
 
-  # ──────────────────────────────────────────────────── sec‑manager ──
+  # ─────────────────────────────────────────────── sec‑manager ──
   sec_manager:
     build: ./services/sec_manager
     container_name: sec_manager
@@ -50,5 +49,3 @@ services:
       PYTHONUNBUFFERED: "1"
     ports:
       - "5000:8000"
-
-# default bridge network is created automatically; no extra config needed
