@@ -1,51 +1,49 @@
-# docker‑compose.yml  ── Compose V2 syntax (no “version:” key)
+# docker‑compose.yml   (root of repo)
+#
+# single network shared by every service
+# explicit environment mappings (not a list!)
+# each service exposes the port the test‑suite expects
 
 services:
-  # ────────────────────────────────────────── data‑collector ──
   data_collector:
-    build: ./services/data_collector
+    build:
+      context: ./services/data_collector
     container_name: data_collector
-    restart: unless-stopped
-    volumes:
-      - ./services/data_collector:/app           # service source
-      - ./tests/data_collector_tests:/app/tests  # make tests visible in the image
+    ports:
+      - "6000:6000"            # tests hit http://localhost:6000
     environment:
       PYTHONUNBUFFERED: "1"
-    ports:
-      - "6000:6000"                              # host:container (matches tests)
+    volumes:                   # mount only this test folder when you run pytest
+      - ./tests/data_collector_tests:/app/tests
+    entrypoint: ["/entrypoint.sh"]
 
-  # ────────────────────────────────────────────────── ml‑model ──
   ml_model:
-    build: ./services/ml_model
+    build:
+      context: ./services/ml_model
     container_name: ml_model
-    restart: unless-stopped
-    volumes:
-      - ./services/ml_model:/app
+    ports:
+      - "5100:5100"
     environment:
       PYTHONUNBUFFERED: "1"
-    ports:
-      - "5200:8000"
 
-  # ────────────────────────────────────────────────── fin‑dash ──
   fin_dash:
-    build: ./services/fin_dash
+    build:
+      context: ./services/fin_dash
     container_name: fin_dash
-    restart: unless-stopped
-    volumes:
-      - ./services/fin_dash:/app
+    ports:
+      - "7100:7100"
     environment:
       PYTHONUNBUFFERED: "1"
-    ports:
-      - "7100:8050"
 
-  # ─────────────────────────────────────────────── sec‑manager ──
   sec_manager:
-    build: ./services/sec_manager
+    build:
+      context: ./services/sec_manager
     container_name: sec_manager
-    restart: unless-stopped
-    volumes:
-      - ./services/sec_manager:/app
+    ports:
+      - "8000:8000"
     environment:
       PYTHONUNBUFFERED: "1"
-    ports:
-      - "5000:8000"
+
+networks:
+  default:
+    driver: bridge
