@@ -1,4 +1,6 @@
-flask==2.2.5
-dash==2.10.2
-pandas==2.0.1
+dash==2.17.0
+pandas==2.2.2
 requests==2.31.0
+
+# --- dev / CI ---
+pytest>=7.0
